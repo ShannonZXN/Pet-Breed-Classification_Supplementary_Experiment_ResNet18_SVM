@@ -1,8 +1,6 @@
 # Supply the experiment's shared manifest
 
-No saved split lists were present in the supplied `resnet18_svm_package.zip`.
-This folder intentionally contains instructions rather than reconstructed
-historical memberships.
+The original experiment manifest is provided as manifest.csv. It contains the image identifiers, breed labels and dataset assignments used for the reported ResNet18–SVM experiments.
 
 For reported results, place the exact experiment manifest here as `manifest.csv`.
 The four required columns are:
