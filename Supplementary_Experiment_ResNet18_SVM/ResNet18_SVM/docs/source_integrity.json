@@ -1,0 +1,37 @@
+{
+  "source_archive": "resnet18_svm_package.zip",
+  "source_archive_sha256": "0b8e95a997b44b2558e2bac5c9d71304884f81c5e759c49ddcd14abb0b21002d",
+  "comparison": "Python AST, ignoring docstrings and renamed documentation references in two error strings",
+  "files": [
+    {
+      "file": "build_manifest_from_ids.py",
+      "source_sha256": "0af392bdfc070b348eacde09af90db5b750e16b1df7b2a32e1f7943fe7eb83b5",
+      "executable_ast_preserved": true
+    },
+    {
+      "file": "generate_shared_splits.py",
+      "source_sha256": "36022256dd1e3d0362d1431292c3bbaec5c5d8df1450f3067b574278b19c91dc",
+      "executable_ast_preserved": true
+    },
+    {
+      "file": "merge_split_csvs.py",
+      "source_sha256": "d82d16ee605c44bb685770c4d814831a43d07eb6e13c6939ae44995ea1ae253c",
+      "executable_ast_preserved": true
+    },
+    {
+      "file": "oxford_annotations.py",
+      "source_sha256": "05e07a6035dd68f591a1b380c6ee1fa85cc481e40df55055a050c15200a9ffc4",
+      "executable_ast_preserved": true
+    },
+    {
+      "file": "resnet18_svm.py",
+      "source_sha256": "b833d220a02def9fea6a31eb9e5612535485e401cd9ac3f91de6935cb63ec7bf",
+      "executable_ast_preserved": true
+    },
+    {
+      "file": "self_test.py",
+      "source_sha256": "f0abbe6612b3d908e02be74970e838560e676a7150d2d438edb3ca47066f12eb",
+      "executable_ast_preserved": true
+    }
+  ]
+}

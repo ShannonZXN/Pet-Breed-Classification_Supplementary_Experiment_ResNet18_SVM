@@ -1,0 +1,6 @@
+# Separate Python 3.12 Windows x86-64 environment for the published DirectML wheel.
+# Let this package select its matching torch/torchvision dependencies.
+torch-directml==0.2.5.dev240914
+# Conservative NumPy ABI range for the older PyTorch stack selected by DirectML.
+numpy>=1.26,<2
+-r requirements.txt

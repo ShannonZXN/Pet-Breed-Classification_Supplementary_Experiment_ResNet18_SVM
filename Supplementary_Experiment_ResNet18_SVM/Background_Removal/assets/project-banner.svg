@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320" role="img" aria-labelledby="title description">
+  <title id="title">Pet Background Removal</title>
+  <desc id="description">A dark blue project banner with a circular erosion-probe motif and labels for native resolution, trimap masks, and CPU processing.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b1e2e"/>
+      <stop offset="1" stop-color="#163c4b"/>
+    </linearGradient>
+    <radialGradient id="glow">
+      <stop offset="0" stop-color="#57dcc3" stop-opacity="0.14"/>
+      <stop offset="1" stop-color="#57dcc3" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1280" height="320" rx="20" fill="url(#background)"/>
+  <circle cx="1105" cy="160" r="220" fill="url(#glow)"/>
+  <g fill="none" stroke="#69dcc7">
+    <circle cx="1105" cy="160" r="122" stroke-opacity="0.12"/>
+    <circle cx="1105" cy="160" r="95" stroke-opacity="0.22"/>
+    <circle cx="1105" cy="160" r="67" stroke-opacity="0.65" stroke-width="2"/>
+    <path d="M1105 160h67" stroke-width="2"/>
+    <path d="M1105 150v20M1172 150v20" stroke-width="2"/>
+  </g>
+  <circle cx="1105" cy="160" r="5" fill="#69dcc7"/>
+  <text x="1135" y="148" fill="#b7eee2" font-family="Arial, Helvetica, sans-serif" font-size="17">r</text>
+  <text x="64" y="69" fill="#70dec8" font-family="Arial, Helvetica, sans-serif" font-size="15" letter-spacing="3">OXFORD-IIIT PET · IMAGE PREPROCESSING</text>
+  <text x="60" y="145" fill="#f6fafc" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="56">Pet Background Removal</text>
+  <text x="64" y="187" fill="#b8ccd5" font-family="Arial, Helvetica, sans-serif" font-size="21">Sample comparisons. Full-dataset processing. Output audits.</text>
+  <g font-family="Arial, Helvetica, sans-serif" font-size="14" fill="#d4e8ed">
+    <rect x="64" y="226" width="150" height="34" rx="17" fill="#224757"/>
+    <text x="139" y="248" text-anchor="middle">Native resolution</text>
+    <rect x="228" y="226" width="125" height="34" rx="17" fill="#224757"/>
+    <text x="290" y="248" text-anchor="middle">Trimap masks</text>
+    <rect x="367" y="226" width="100" height="34" rx="17" fill="#224757"/>
+    <text x="417" y="248" text-anchor="middle">CPU only</text>
+  </g>
+</svg>

@@ -1,0 +1,4 @@
+# Image arrays, image I/O, and binary morphology. No GPU packages are required.
+numpy>=1.24
+Pillow>=10.0
+scipy>=1.10
