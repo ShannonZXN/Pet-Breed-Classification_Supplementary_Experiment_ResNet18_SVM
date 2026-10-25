@@ -1,0 +1,51 @@
+{
+  "seed": 42,
+  "method": "sklearn.model_selection.train_test_split; stratify=official CLASS-ID",
+  "input_order": "official trainval image_id, casefold ascending",
+  "counts": {
+    "train": 2944,
+    "val": 736,
+    "test": 3669
+  },
+  "total_labelled_images": 7349,
+  "class_counts": {
+    "train": 37,
+    "val": 37,
+    "test": 37
+  },
+  "checks": {
+    "no_duplicates": true,
+    "pairwise_disjoint": true,
+    "train_plus_val_equals_official_trainval": true,
+    "official_test_membership_unchanged": true,
+    "union_equals_official_list": true,
+    "labels_match_annotations": true,
+    "all_breeds_present_in_every_split": true
+  },
+  "source_annotation_sha256": {
+    "list.txt": "6a54ab256e22f7a33c6f17a7669e58ea5f6f9c7a080ec2622c205aefd4b354da",
+    "trainval.txt": "408f3f609481b939c94634169e6413414b733a3faeba440cbdcc5c02142eebdc",
+    "test.txt": "a5454003774ffe01f4f322756d3ba5495bae21cb30bb217ab285dbfa2bef245c"
+  },
+  "file_sha256": {
+    "train.csv": "c019cad794631a1024e3bdbab32a658fb999bf2628d167ca515512a0a6254a29",
+    "train_ids.txt": "1ceacb3d7aae6852a26212775f94c650108855fd451adf0f6278ec1ffbca14ff",
+    "val.csv": "f2d42cb2c115f669a7ae9bd43bd88adcc31676243abb1a2f5124b0b92e044efe",
+    "val_ids.txt": "b405f99043ac28a2dcfa4b48b1c3fdb72f48596218ee3570a96df9daabbfc052",
+    "test.csv": "82ad0e8f8fd8b5d38dec667225e41d6a444c363ba35859bde7886be7015c16fc",
+    "test_ids.txt": "f56f432a8d8f93a89658dd9808c71fa3640c1cdb91ebaa9ed1957cd28ad1069d",
+    "manifest.csv": "1483253e93af8d19d77dff2329c7fefea9506de64d755574efa270815bb5692a",
+    "class_counts.csv": "4e001162c8f51a163e5c7fc6d9152cb42f5b779bc473dd74f44d53db514ef84f"
+  },
+  "generated_with": {
+    "python": "3.12.14",
+    "numpy": "2.3.5",
+    "scikit-learn": "1.8.0"
+  },
+  "notes": [
+    "Use these saved lists for every method, original images, and foreground images.",
+    "Images outside official list.txt are excluded. No image is copied, moved, edited or deleted.",
+    "No feature extraction, model training, validation scoring or test evaluation has run.",
+    "Saved lists are authoritative; do not regenerate independently for other experiments."
+  ]
+}
