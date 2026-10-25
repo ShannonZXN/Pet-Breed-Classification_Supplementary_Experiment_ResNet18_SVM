@@ -1,250 +1,581 @@
 <p align="center">
-  <img src="assets/project-banner.svg" alt="ResNet-18 Features + SVM — native resolution, frozen features, validation-selected classification" width="100%">
+  <img src="assets/project-banner.svg" alt="ResNet18 Feature Extraction with SVM Classification" width="100%">
 </p>
 
 <p align="center">
-  <strong>One shared manifest. Two image variants. A traceable experiment.</strong>
+  <strong>Frozen ResNet18 Features · SVM Classification · Image Resolution and Background Comparison</strong>
 </p>
 
 <p align="center">
-  <a href="START_HERE.md">Start here</a> ·
-  <a href="docs/method.md">Method</a> ·
-  <a href="docs/file_guide.md">Code guide</a> ·
-  <a href="docs/reproducibility.md">Reproducibility</a> ·
-  <a href="docs/DIRECTML.md">AMD / DirectML</a>
+  <a href="START_HERE.md">Start Here</a> ·
+  <a href="docs/EXPERIMENT_SETUP.md">Experiment Setup</a> ·
+  <a href="docs/file_guide.md">Code Guide</a> ·
+  <a href="docs/RESULTS.md">Results</a> ·
+  <a href="docs/reproducibility.md">Reproducibility</a>
 </p>
 
-# ResNet-18 Features + SVM
+# Pretrained ResNet18 Feature Extraction with SVM
 
-Pet-breed classification using **frozen ImageNet ResNet-18 features** and a
-**validation-selected support vector machine**. The code supports original
-images and precomputed foreground images, with separate feature caches,
-fitted models, and result folders for each variant.
+### UTS 31256 — Cat and Dog Breed Classification
 
-- **Native resolution:** RGB conversion and fixed ImageNet normalization;
-  no resize, crop, padding, augmentation, or EXIF transpose.
-- **512 features per image:** replace the ResNet classifier with `Identity`,
-  freeze every parameter, and run in evaluation mode under `torch.no_grad()`.
-- **Train-only fitting:** fit `StandardScaler` and `SVC` on training features;
-  choose a configuration on validation and evaluate the saved model separately.
-- **Traceable runs:** record image hashes, manifest hashes, availability,
-  package versions, candidate scores, settings, predictions, and error analysis.
-- **Hardware choices:** CPU, CUDA, and explicit DirectML extraction;
-  scikit-learn SVM fitting runs on CPU.
+This project uses a pretrained ResNet18 network to extract image features and a Support Vector Machine (SVM) to classify 37 cat and dog breeds from the Oxford-IIIT Pet Dataset.
 
-This edition adds English comments, docstrings, and documentation while keeping
-the supplied Python logic and experiment defaults. It includes no model weights,
-trained classifiers, feature caches, or pet-classification results.
+The experiments investigate how image resolution and background removal affect classification performance. An alternative 80:20 training–validation split was also adopted to provide more training samples while retaining a validation set for model selection.
 
-## Before you run
+The implementation uses Python, PyTorch, torchvision and scikit-learn.
 
-> **The uploaded source ZIP did not contain `splits/manifest.csv` or saved split
-> lists.** For reported experiments, supply the exact manifest used for those
-> results. The generator can create a new seeded split, but cannot establish that
-> its memberships match a missing historical manifest.
+---
 
-The bundled annotation texts contain **7,349 labelled images**: **3,680 official
-trainval** and **3,669 official test**, across **37 breeds**. The generator is
-configured for **2,944 train / 736 validation / 3,669 test**, using seed **42**.
-These are target list counts, not guaranteed counts of available image files.
+## 1. Project Overview
 
-The original configuration also differs from the older documentation:
+The classification method consists of two main stages:
 
-| Setting retained from the code | Meaning |
-| --- | --- |
-| `DEVICE = "directml"` | Explicit Windows/AMD extraction choice. Change to `"cpu"` or `"auto"` for a suitable different environment. |
-| `SKIP_MISSING_IMAGES = True` | Skip absent listed files independently in each variant and report the actual subsets. |
-| `OUTPUT_ROOT = ... / "resnet18_svm_outputs_available"` | All experiment outputs go under this root. |
-| `BATCH_SIZE = 1`, `NUM_WORKERS = 0` | Process variable native image sizes one at a time. |
-
-Missing files can cause the variants to use different training, validation, and
-test samples. Review `available_manifest.csv`, `missing_images.csv`, and
-`availability_summary.json` when interpreting comparisons. See
-[the sample-policy details](docs/reproducibility.md#missing-images-and-comparability).
-
-## Quick start
-
-Use a Python **3.12** virtual environment. The commands below show a CPU setup;
-use [the DirectML guide](docs/DIRECTML.md) for the retained AMD configuration,
-or the [official PyTorch installer](https://pytorch.org/get-started/locally/)
-for a compatible CUDA installation.
-
-```bash
-python -m venv .venv
+```text
+Input Image
+     |
+     v
+Pretrained ResNet18
+(Frozen Parameters)
+     |
+     v
+512-Dimensional Features
+     |
+     v
+StandardScaler
+     |
+     v
+SVM Classifier
+(Linear / RBF)
+     |
+     v
+Predicted Pet Breed
 ```
 
-Activate it using your terminal:
+ResNet18 uses pretrained ImageNet-1K weights and remains frozen throughout feature extraction.
 
-| Terminal | Command |
-| --- | --- |
-| Windows PowerShell | `.venv\Scripts\Activate.ps1` |
-| Windows Command Prompt | `.venv\Scripts\activate.bat` |
-| macOS / Linux | `source .venv/bin/activate` |
+Its original classification layer is replaced with an Identity layer, allowing the network to output 512-dimensional feature vectors.
 
-On Windows, the commands in [START_HERE.md](START_HERE.md) call the environment's
-Python directly and do not require changing an activation policy.
+These features are standardised and passed to an SVM classifier trained using labelled pet images.
 
-```bash
-python -m pip install --upgrade pip
-python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-python -m pip install -r requirements.txt
+Different SVM configurations are evaluated on the validation set before the selected model is tested on the independent test set.
+
+---
+
+## 2. Experimental Design
+
+### 2.1 Image Resolution and Background Comparison
+
+Four image conditions were investigated:
+
+| Image Condition | Resolution | Background |
+|---|---|---|
+| Original — Native | Original image dimensions | Original background |
+| Foreground — Native | Original image dimensions | Background removed |
+| Original — Reduced | 224 × 224 | Original background |
+| Foreground — Reduced | 224 × 224 | Background removed |
+
+The native-resolution images were obtained from the Oxford-IIIT Pet Dataset.
+
+The reduced-resolution images were prepared separately by the project team.
+
+The native-resolution foreground images were generated using the supplied trimap annotations, binary masks and mask processing.
+
+The background removal implementation is provided separately in the `Background_Removal` package.
+
+The reduced-resolution foreground images were supplied by the team and used as prepared inputs.
+
+**Important:** The classification program does not resize images or generate foreground masks. It reads the prepared images while preserving their existing dimensions.
+
+### 2.2 Alternative Training–Validation Split
+
+The experiments used an 80:20 training–validation allocation.
+
+The purpose was to increase the number of images available for SVM training while retaining sufficient validation samples for model selection.
+
+The Oxford-IIIT Pet Dataset contains 7,349 labelled images across 37 breeds.
+
+The official dataset provides 3,680 trainval images and 3,669 test images.
+
+The saved manifest divides the official trainval set into:
+
+| Dataset Split | Images |
+|---|---:|
+| Training | 2,944 |
+| Validation | 736 |
+| Test | 3,669 |
+| **Total** | **7,349** |
+
+The saved split was generated using stratified sampling with random seed 42.
+
+The official test membership remains unchanged.
+
+The dataset allocation files are provided in the [`splits/`](splits/) directory.
+
+These include:
+
+- `manifest.csv`
+- `train.csv`
+- `val.csv`
+- `test.csv`
+- `train_ids.txt`
+- `val_ids.txt`
+- `test_ids.txt`
+- `class_counts.csv`
+- `split_summary.json`
+
+The split files record image identifiers, breed labels and dataset assignments.
+
+The saved manifest should be used when reproducing the experiment. Generating a new split is unnecessary and may produce different image assignments.
+
+**Note:** The 80:20 allocation was an alternative experimental configuration, not a controlled comparison against a 50:50 split using the same model. Therefore, the results do not independently establish whether 80:20 improves classification accuracy.
+
+---
+
+## 3. Classification Implementation
+
+### 3.1 Pretrained ResNet18 Feature Extraction
+
+The implementation uses:
+
+- Architecture: ResNet18
+- Pretrained weights: `ResNet18_Weights.IMAGENET1K_V1`
+- Framework: PyTorch and torchvision
+- Network parameters: Frozen
+- Network mode: Evaluation
+- Output dimension: 512 features
+
+Input images are converted to RGB and normalised using the ImageNet parameters:
+
+```python
+mean = [0.485, 0.456, 0.406]
+std = [0.229, 0.224, 0.225]
 ```
 
-Edit the settings at the top of `resnet18_svm.py`. For this CPU setup:
+The input images retain their stored dimensions.
+
+Global average pooling allows the network to produce 512-dimensional feature vectors from images of different supported sizes.
+
+### 3.2 Feature Standardisation
+
+The extracted features are standardised using scikit-learn's `StandardScaler`.
+
+The scaler is fitted using training features only.
+
+The same fitted scaler is applied to validation and test features to avoid using evaluation data when calculating standardisation parameters.
+
+### 3.3 SVM Classification and Model Selection
+
+The implementation uses scikit-learn's `SVC`.
+
+Two SVM kernels were evaluated:
+
+- Linear
+- Radial Basis Function (RBF)
+
+For each kernel, 25 logarithmically spaced C values between 0.001 and 1000 were tested.
+
+The RBF kernel used:
+
+```python
+gamma = "scale"
+```
+
+This produced 50 candidate configurations for each image condition.
+
+The model with the highest validation accuracy was selected.
+
+When multiple configurations achieved the same accuracy, the first configuration in the search order was retained.
+
+The selected scaler and SVM were used for final testing without further training.
+
+Each image condition had its own fitted scaler and SVM.
+
+---
+
+## 4. Repository Structure
+
+```text
+ResNet18_SVM/
+│
+├── README.md
+├── START_HERE.md
+├── CHANGELOG.md
+│
+├── requirements.txt
+├── requirements-directml.txt
+│
+├── resnet18_svm.py
+├── oxford_annotations.py
+├── build_manifest_from_ids.py
+├── generate_shared_splits.py
+├── merge_split_csvs.py
+├── self_test.py
+│
+├── annotations/
+│   └── README.md
+│
+├── splits/
+│   ├── README.md
+│   ├── manifest.csv
+│   ├── train.csv
+│   ├── val.csv
+│   ├── test.csv
+│   ├── train_ids.txt
+│   ├── val_ids.txt
+│   ├── test_ids.txt
+│   ├── class_counts.csv
+│   └── split_summary.json
+│
+├── docs/
+│   ├── EXPERIMENT_SETUP.md
+│   ├── file_guide.md
+│   ├── DIRECTML.md
+│   ├── RESULTS.md
+│   ├── reproducibility.md
+│   └── REVIEW_NOTES.md
+│
+└── assets/
+    └── project-banner.svg
+```
+
+### Main Python Files
+
+| File | Purpose |
+|---|---|
+| `resnet18_svm.py` | Main classification pipeline, feature extraction, SVM training, model selection and evaluation |
+| `oxford_annotations.py` | Load and validate Oxford-IIIT Pet annotations |
+| `build_manifest_from_ids.py` | Build a manifest from existing validation image IDs |
+| `generate_shared_splits.py` | Generate a new stratified dataset split when explicitly required |
+| `merge_split_csvs.py` | Combine existing training, validation and test CSV files |
+| `self_test.py` | Run functional tests using synthetic data |
+
+The helper scripts are provided for dataset preparation and verification.
+
+The existing saved manifest should be used for reproducing the reported data allocation.
+
+---
+
+## 5. Computing Environment
+
+The reported experiments used a Windows-based Python environment.
+
+### Main Environment
+
+| Component | Configuration |
+|---|---|
+| Operating System | Windows 10, 64-bit |
+| Python | 3.12 |
+| Deep Learning Framework | PyTorch |
+| Feature Extraction | Pretrained ResNet18 |
+| GPU | AMD Radeon RX 5700 XT |
+| GPU Backend | DirectML |
+| SVM Training | CPU, using scikit-learn |
+
+The ResNet18 feature extraction stage used GPU acceleration through DirectML.
+
+SVM training, validation and prediction were performed using scikit-learn on the CPU.
+
+### Required Dependencies
+
+Main Python packages include:
+
+- PyTorch
+- torchvision
+- NumPy
+- Pillow
+- scikit-learn
+- joblib
+- matplotlib
+
+The dependency files are:
+
+- `requirements.txt`
+- `requirements-directml.txt`
+
+The exact setup instructions are provided in [`START_HERE.md`](START_HERE.md).
+
+DirectML configuration instructions are available in [`docs/DIRECTML.md`](docs/DIRECTML.md).
+
+The program also supports CPU and CUDA configurations when the required dependencies are installed and the device setting is changed.
+
+---
+
+## 6. How to Run
+
+### Step 1 — Prepare the Dataset
+
+Download the Oxford-IIIT Pet Dataset from:
+
+https://www.robots.ox.ac.uk/~vgg/data/pets/
+
+Prepare the required image folders and official annotation files.
+
+The classification program expects the input images to have already been prepared.
+
+For foreground processing, refer to the separate `Background_Removal` package.
+
+### Step 2 — Confirm the Dataset Split
+
+The repository includes the saved split files in:
+
+```text
+splits/
+```
+
+The main classification program reads:
+
+```text
+splits/manifest.csv
+```
+
+Do not regenerate the dataset split when using the saved allocation.
+
+The manifest contains the image IDs, labels and dataset assignments required for training, validation and testing.
+
+### Step 3 — Configure Input Paths
+
+Open:
+
+```text
+resnet18_svm.py
+```
+
+Update the image folder paths:
 
 ```python
 IMAGE_FOLDERS = {
     "original": Path(r"D:\Pets\original"),
     "foreground": Path(r"D:\Pets\background_removed_all"),
 }
-DEVICE = "cpu"
 ```
 
-Replace the example paths with your actual directories. Both are read directly;
-images do not need to be moved into this repository. Only top-level JPG/JPEG/PNG
-files are indexed, matching by case-insensitive filename stem.
+Replace these example paths with the locations of your actual images.
 
-Place your agreed manifest at `splits/manifest.csv`, or follow
-[the split options](START_HERE.md#step-1--supply-the-exact-split-membership).
-Then run these stages in order, proceeding after each succeeds:
+Choose the appropriate device:
+
+```python
+DEVICE = "directml"
+```
+
+Other supported settings include `"cpu"`, `"cuda"` and `"auto"`.
+
+The default DirectML setting matches the original Windows/AMD configuration.
+
+### Step 4 — Check the Environment
+
+Run:
 
 ```bash
 python resnet18_svm.py check
+```
+
+Then run the functional tests:
+
+```bash
 python self_test.py
+```
+
+### Step 5 — Check the Dataset
+
+```bash
 python resnet18_svm.py audit --dataset both
+```
+
+A small feature-extraction test can be performed using:
+
+```bash
 python resnet18_svm.py smoke --dataset both
-python resnet18_svm.py train --dataset foreground
-python resnet18_svm.py train --dataset original
+```
+
+### Step 6 — Train the SVM Models
+
+```bash
+python resnet18_svm.py train --dataset both
+```
+
+This stage extracts or reuses ResNet18 features, fits the SVM candidates and selects the best configuration using validation accuracy.
+
+Original and Foreground models are trained separately.
+
+### Step 7 — Evaluate the Models
+
+```bash
 python resnet18_svm.py test --dataset both
 ```
 
-The first real extraction downloads the official ImageNet weights unless they
-are already in PyTorch's cache. Training automatically extracts or reuses the
-required feature cache. The full sequence, expected reports, and troubleshooting
-are explained in [START_HERE.md](START_HERE.md).
+The selected models are evaluated using their corresponding available test images.
 
-## Experiment settings
+The test stage does not retrain or reselect the SVM.
 
-| Component | Supplied setting |
-| --- | --- |
-| Weights | `ResNet18_Weights.IMAGENET1K_V1` |
-| Input | Stored width/height; convert RGB; tensor values in `[0, 1]` |
-| Channel normalization | Mean `[0.485, 0.456, 0.406]`; std `[0.229, 0.224, 0.225]` |
-| Feature layer | Adaptive global average pool → flatten → `Identity` classifier |
-| Extractor state | Frozen parameters, `eval()`, `no_grad()` |
-| Feature standardization | `StandardScaler`, fitted on training features only |
-| SVM kernels | `linear`, `rbf` |
-| C grid | 25 logarithmically spaced values, `0.001` to `1000` inclusive |
-| RBF gamma | `"scale"` |
-| Candidate count | 50 per variant with the default grid |
-| Selection | Validation accuracy; exact ties keep the first grid candidate |
-| Final fit | Retain the train-fitted winner; no train + validation refit |
-| Scores | Uncalibrated SVM decision scores, not probabilities |
+### Step 8 — Repeat for the Alternative Resolution
 
-The same manifest and candidate grid are used for both variants; each variant
-fits its own scaler and SVM. This package preserves source image dimensions;
-it does not generate resized input datasets or perform background removal.
-The foreground branch expects already prepared images.
+To evaluate both native-resolution and reduced-resolution inputs, configure the corresponding image folders and run the pipeline separately.
 
-## Commands
+Use a different `OUTPUT_ROOT` for each resolution so that the saved feature caches, selected models and evaluation results remain separate.
 
-```bash
-python resnet18_svm.py --help
+The program does not automatically switch between all four image conditions.
+
+For detailed execution instructions, see:
+
+**[START_HERE.md](START_HERE.md)**
+
+---
+
+## 7. Experimental Results
+
+The reported test results for the four image conditions were:
+
+| Input Condition | Test Images | Accuracy (%) | Macro F1 (%) |
+|---|---:|---:|---:|
+| Original — Native | 3,669 | 86.02 | 85.75 |
+| Foreground — Native | 3,669 | 86.26 | 85.98 |
+| **Original — Reduced** | **3,669** | **87.57** | **87.48** |
+| Foreground — Reduced | 3,662 | 86.18 | 86.17 |
+
+The best reported performance was achieved using reduced-resolution Original images:
+
+**Test Accuracy: 87.57%**
+
+**Macro F1: 87.48%**
+
+Reducing resolution improved the test accuracy of Original images by 1.55 percentage points.
+
+However, background removal did not consistently improve classification accuracy.
+
+At native resolution, removing the background slightly increased accuracy.
+
+At reduced resolution, background removal decreased accuracy by approximately 1.39 percentage points.
+
+These results indicate that image resolution and background processing can affect the classification performance of fixed pretrained features.
+
+The values above are taken from the project report. They are not newly generated benchmark results from this repository documentation.
+
+Further results and explanations are provided in:
+
+**[docs/RESULTS.md](docs/RESULTS.md)**
+
+---
+
+## 8. Limitations and Reproducibility
+
+Several factors should be considered when interpreting the results.
+
+### Image Preparation
+
+Native-resolution and reduced-resolution images were prepared using different processing methods.
+
+Differences in resizing, padding, background replacement and mask processing may affect the features extracted by ResNet18.
+
+The observed differences cannot be attributed to image resolution alone.
+
+### Available Test Images
+
+The reduced-resolution Foreground condition contained seven fewer test images than the other three conditions.
+
+The classification program records missing images and evaluates the available samples.
+
+### Training–Validation Allocation
+
+The supplementary ResNet18–SVM experiments used an 80:20 split, while the other classification pipelines in the group project used approximately 50:50.
+
+Although the main experiments used the official test image set, differences in training allocations and other experimental settings limit direct comparisons between methods.
+
+The reported results do not independently demonstrate that the 80:20 split is better than 50:50.
+
+### Saved Experiment Records
+
+The repository contains dataset allocation files and documented implementation settings.
+
+However, the saved split files alone do not prove that their exact image memberships match every historical training run.
+
+For exact reproduction of a reported model, the saved manifest should also be checked against the manifest hash stored in its original training records.
+
+The complete prepared image datasets, pretrained model weights, trained classifiers and historical experiment outputs are not included in this source-code repository.
+
+Additional reproducibility information is provided in:
+
+**[docs/reproducibility.md](docs/reproducibility.md)**
+
+---
+
+## 9. Relationship to Background Removal
+
+This repository contains the ResNet18–SVM classification implementation.
+
+The related `Background_Removal` package provides the foreground image preparation procedures.
+
+The combined workflow is:
+
+```text
+Oxford-IIIT Pet Dataset
+          |
+          v
+Original Images + Trimap Annotations
+          |
+          v
+Background Removal
+(Binary Mask + Erosion)
+          |
+          v
+Prepared Foreground Images
+          |
+          v
+Frozen ResNet18 Feature Extraction
+          |
+          v
+512-Dimensional Features
+          |
+          v
+SVM Training and Model Selection
+          |
+          v
+Test Evaluation and Classification Results
 ```
 
-| Stage | Purpose |
-| --- | --- |
-| `check` | Record package versions and test a tensor operation on the selected device. |
-| `audit` | Check input IDs, annotations, manifest validity, and available rows. |
-| `smoke` | Extract up to 16 shared training images and verify dimensions and feature alignment. |
-| `extract` | Build or reuse the full available manifest-image feature cache. |
-| `train` | Fit candidate pipelines on train and choose one using validation. |
-| `test` | Evaluate an already saved model on available test rows. |
-| `predict` | Classify one image with a saved variant-matched model. |
+The reduced-resolution Original and Foreground images were supplied separately by the project team.
 
-The CLI defaults to `--dataset foreground`; use `--dataset both` explicitly for
-paired audit, smoke, extraction, training, or testing. Both branches run
-sequentially, foreground first.
+Background removal and classification remain separate programs, allowing each stage to be examined independently.
 
-```bash
-python resnet18_svm.py extract --dataset both
-python resnet18_svm.py train --dataset foreground --refresh-cache
-python resnet18_svm.py test --dataset original --model "/path/to/best_model.joblib"
-python resnet18_svm.py predict --dataset original --image "/path/to/photo.jpg"
-```
+---
 
-`--model` requires one variant; `predict` also requires one variant and `--image`.
-`--refresh-cache` affects extract/train/test; it is not a new sampling command.
+## 10. References
 
-## Where results go
+**Dataset**
 
-All paths below are relative to `resnet18_svm_outputs_available/`:
+Parkhi, O. M., Vedaldi, A., Zisserman, A., & Jawahar, C. V. (2012). *Cats and Dogs*. IEEE Conference on Computer Vision and Pattern Recognition (CVPR).
 
-| Path | Contents |
-| --- | --- |
-| `environment_report.json` | Package versions and selected-device check. |
-| `data_audit/` | Pairing, official labels, class map, and audit summary. |
-| `<variant>/data_audit/` | Available manifest, missing-image CSV, availability summary. |
-| `<variant>/smoke_tests/smoke_.../` | Training sample IDs, sample features, and checks. |
-| `<variant>/feature_cache/features.npz` | Full available listed-image features and provenance. |
-| `<variant>/runs/run_.../` | Validation grid, predictions, C curve, fitted model, settings, availability. |
-| `<variant>/latest_model.json` | Absolute path to the most recent successful model. |
-| `<variant>/runs/run_.../test_.../` | Test predictions, metrics, score columns, confusion matrix, errors, availability. |
+Oxford-IIIT Pet Dataset:
 
-Training and testing create new UTC timestamped run folders. Feature caches,
-audit reports, and the latest-model pointer are reused/updated. After moving a
-project, supply a model's new path explicitly with `--model` if necessary.
+https://www.robots.ox.ac.uk/~vgg/data/pets/
 
-## Repository files
+**ResNet**
 
-| File | Role |
-| --- | --- |
-| [`resnet18_svm.py`](resnet18_svm.py) | Settings, feature extraction/cache, SVM selection, testing, prediction. |
-| [`oxford_annotations.py`](oxford_annotations.py) | Official annotation loading, consistency checks, manifest validation. |
-| [`generate_shared_splits.py`](generate_shared_splits.py) | Deliberately generate a new seeded stratified split. |
-| [`build_manifest_from_ids.py`](build_manifest_from_ids.py) | Fill official labels around an existing validation-ID list. |
-| [`merge_split_csvs.py`](merge_split_csvs.py) | Merge three existing split CSVs without reassigning images. |
-| [`self_test.py`](self_test.py) | Offline synthetic functional tests; optional untrained ResNet structure check. |
-| [`annotations/`](annotations/) | Original supplied label texts and their original README. |
-| [`splits/README.md`](splits/README.md) | Missing-manifest notice and required schema. |
+He, K., Zhang, X., Ren, S., & Sun, J. (2016). *Deep Residual Learning for Image Recognition*. IEEE Conference on Computer Vision and Pattern Recognition (CVPR).
 
-See [the annotated code guide](docs/file_guide.md) for function-level responsibilities.
+**Software Documentation**
 
-## Verification
+PyTorch:
 
-```bash
-python -m compileall -q .
-python self_test.py
-```
+https://pytorch.org/
 
-The supplied suite covers row/label alignment, split leakage checks, train-only
-standardization, cache invalidation, model selection, separate variant outputs,
-smoke reports, and result exports. Tests use temporary synthetic data and never
-download pretrained weights. An optional structure test constructs an untrained
-ResNet when torch/torchvision are installed.
+Torchvision ResNet18:
 
-Local validation for this edition: **18 tests discovered, 17 passed, 1 skipped**.
-The skipped test requires torch/torchvision, which were not installed in the
-verification environment. The Python executable statements match the supplied
-six scripts after excluding docstrings and two renamed documentation references
-in error messages. Annotation files are retained byte-for-byte. See
-[verification scope](docs/reproducibility.md#verification-of-this-edition).
+https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.resnet18.html
 
-The included GitHub Actions workflow installs CPU PyTorch and runs the suite.
-It has not been executed on GitHub as part of preparing this archive. No real
-ImageNet feature extraction, GPU run, or full pet experiment was executed here.
+Scikit-learn SVM:
 
-## Further reading and attribution
+https://scikit-learn.org/stable/modules/svm.html
 
-- [Step-by-step execution guide](START_HERE.md)
-- [Processing and model-selection method](docs/method.md)
-- [Reproducibility, caches, and missing images](docs/reproducibility.md)
-- [Revision notes](CHANGELOG.md)
-- [Oxford-IIIT Pet dataset and original research](https://www.robots.ox.ac.uk/~vgg/data/pets/)
-- [Torchvision ResNet-18 weights and default transforms](https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.resnet18.html)
-- [scikit-learn SVC](https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html)
+---
 
-The bundled annotation README attributes the dataset to Omkar M. Parkhi,
-Andrea Vedaldi, Andrew Zisserman, and C. V. Jawahar, *Cats and Dogs*, CVPR 2012.
-Dataset terms remain those of the original creators; their README is preserved.
-No new software license has been assigned in this packaging revision.
+## 11. Project Notes
+
+This repository documents the supplementary experiments conducted for UTS 31256 — Image Processing and Pattern Recognition.
+
+It includes the Python implementation of frozen ResNet18 feature extraction, SVM model selection and evaluation, together with the saved dataset split files and supporting documentation.
+
+The code is provided for academic review and reproducibility.
+
+The implementation, experimental configurations and reported findings should be interpreted together with the accompanying project report.
+
+No separate software licence has been assigned to this repository.
